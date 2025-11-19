@@ -3,6 +3,7 @@ import { Hotel, HotelPrice } from './types'
 import { HotelCard } from './components/HotelCard'
 import { CheapestDay } from './components/CheapestDay'
 import { Loader } from 'lucide-react'
+import { fetchHotels as fetchHotelsApi } from './api'
 
 function App() {
   const [hotels, setHotels] = useState<Hotel[]>([])
@@ -11,15 +12,13 @@ function App() {
   const [filterPark, setFilterPark] = useState<'all' | 'disney' | 'universal'>('all')
 
   useEffect(() => {
-    fetchHotels()
+    loadHotels()
   }, [])
 
-  const fetchHotels = async () => {
+  const loadHotels = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/hotels')
-      if (!response.ok) throw new Error('Failed to fetch hotels')
-      const data = await response.json()
+      const data = await fetchHotelsApi()
       setHotels(data)
       setError(null)
     } catch (err) {
