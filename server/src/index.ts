@@ -1,5 +1,6 @@
 import express, { Request, Response } from 'express'
 import cors from 'cors'
+import { getCachedHotels, getHotelById, refreshHotels } from './hotelService.js'
 
 const app = express()
 const PORT = process.env.PORT || 5000
@@ -7,117 +8,62 @@ const PORT = process.env.PORT || 5000
 app.use(cors())
 app.use(express.json())
 
-// Mock hotel data with prices for different dates
-const mockHotels = [
-  {
-    id: 'disney-animal-kingdom',
-    name: 'Animal Kingdom Lodge',
-    park: 'disney' as const,
-    tier: 'deluxe' as const,
-    prices: generatePrices('2024-01-15', 180, 320),
-  },
-  {
-    id: 'disney-art-animation',
-    name: 'Art of Animation Resort',
-    park: 'disney' as const,
-    tier: 'value' as const,
-    prices: generatePrices('2024-01-15', 120, 220),
-  },
-  {
-    id: 'disney-poly',
-    name: 'Polynesian Village Resort',
-    park: 'disney' as const,
-    tier: 'deluxe' as const,
-    prices: generatePrices('2024-01-15', 250, 450),
-  },
-  {
-    id: 'disney-caribbean-beach',
-    name: 'Caribbean Beach Resort',
-    park: 'disney' as const,
-    tier: 'moderate' as const,
-    prices: generatePrices('2024-01-15', 150, 280),
-  },
-  {
-    id: 'universal-portofino',
-    name: 'Loews Portofino Bay Hotel',
-    park: 'universal' as const,
-    tier: 'deluxe' as const,
-    prices: generatePrices('2024-01-15', 200, 350),
-  },
-  {
-    id: 'universal-hard-rock',
-    name: 'Hard Rock Hotel',
-    park: 'universal' as const,
-    tier: 'deluxe' as const,
-    prices: generatePrices('2024-01-15', 190, 340),
-  },
-  {
-    id: 'universal-royal-pacific',
-    name: 'Loews Royal Pacific Resort',
-    park: 'universal' as const,
-    tier: 'deluxe' as const,
-    prices: generatePrices('2024-01-15', 195, 345),
-  },
-  {
-    id: 'universal-aventura',
-    name: 'Universal\'s Aventura Hotel',
-    park: 'universal' as const,
-    tier: 'moderate' as const,
-    prices: generatePrices('2024-01-15', 130, 240),
-  },
-]
-
-// Helper function to generate price data for 30 days
-function generatePrices(startDate: string, minPrice: number, maxPrice: number) {
-  const prices = []
-  const start = new Date(startDate)
-
-  for (let i = 0; i < 30; i++) {
-    const date = new Date(start)
-    date.setDate(date.getDate() + i)
-
-    // Create more realistic pricing: lower on weekdays, higher on weekends
-    const dayOfWeek = date.getDay()
-    const isWeekend = dayOfWeek === 5 || dayOfWeek === 6 || dayOfWeek === 0
-    const basePrice = minPrice + Math.random() * (maxPrice - minPrice)
-    const weekendMultiplier = isWeekend ? 1.15 : 0.9
-    const price = Math.round(basePrice * weekendMultiplier)
-
-    prices.push({
-      date: date.toISOString().split('T')[0],
-      price: Math.max(minPrice, Math.min(maxPrice, price)),
-      available: true,
-    })
-  }
-
-  return prices
-}
-
 // API Routes
-app.get('/api/hotels', (req: Request, Response) => {
+
+/**
+ * GET /api/hotels
+ * Returns all hotels with their pricing data
+ */
+app.get('/api/hotels', async (req: Request, res: Response) => {
   try {
-    res.json(mockHotels)
+    const hotels = await getCachedHotels()
+    res.json(hotels)
   } catch (error) {
+    console.error('Error fetching hotels:', error)
     res.status(500).json({ error: 'Failed to fetch hotels' })
   }
 })
 
-app.get('/api/hotels/:id', (req: Request, res: Response) => {
+/**
+ * GET /api/hotels/:id
+ * Returns a specific hotel by ID
+ */
+app.get('/api/hotels/:id', async (req: Request, res: Response) => {
   try {
-    const hotel = mockHotels.find(h => h.id === req.params.id)
+    const hotel = await getHotelById(req.params.id)
     if (!hotel) {
       return res.status(404).json({ error: 'Hotel not found' })
     }
     res.json(hotel)
   } catch (error) {
+    console.error('Error fetching hotel:', error)
     res.status(500).json({ error: 'Failed to fetch hotel' })
   }
 })
 
+/**
+ * POST /api/refresh
+ * Manually refresh the hotel cache
+ */
+app.post('/api/refresh', async (req: Request, res: Response) => {
+  try {
+    const hotels = await refreshHotels()
+    res.json({ message: 'Cache refreshed', count: hotels.length })
+  } catch (error) {
+    console.error('Error refreshing cache:', error)
+    res.status(500).json({ error: 'Failed to refresh cache' })
+  }
+})
+
+/**
+ * GET /api/health
+ * Health check endpoint
+ */
 app.get('/api/health', (req: Request, res: Response) => {
-  res.json({ status: 'ok' })
+  res.json({ status: 'ok', timestamp: new Date().toISOString() })
 })
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`)
+  console.log(`API available at http://localhost:${PORT}/api`)
 })
