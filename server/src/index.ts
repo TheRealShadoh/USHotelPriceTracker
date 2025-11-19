@@ -1,6 +1,6 @@
 import express, { Request, Response } from 'express'
 import cors from 'cors'
-import { getCachedHotels, getHotelById, refreshHotels } from './hotelService.js'
+import { getCachedHotels, getHotelById, refreshHotels, findCheapestConsecutiveDays } from './hotelService.js'
 
 const app = express()
 const PORT = process.env.PORT || 5000
@@ -52,6 +52,41 @@ app.post('/api/refresh', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error refreshing cache:', error)
     res.status(500).json({ error: 'Failed to refresh cache' })
+  }
+})
+
+/**
+ * GET /api/deals/consecutive-days
+ * Find cheapest X consecutive days across all hotels
+ * Query params:
+ *   - days: number of consecutive days (required, 1-365)
+ *   - park: 'disney' or 'universal' (optional)
+ */
+app.get('/api/deals/consecutive-days', async (req: Request, res: Response) => {
+  try {
+    const daysParam = req.query.days as string
+    const parkFilter = req.query.park as 'disney' | 'universal' | undefined
+
+    if (!daysParam) {
+      return res.status(400).json({ error: 'Missing "days" parameter' })
+    }
+
+    const days = parseInt(daysParam, 10)
+    if (isNaN(days) || days < 1 || days > 365) {
+      return res.status(400).json({ error: 'Days must be a number between 1 and 365' })
+    }
+
+    const deals = await findCheapestConsecutiveDays(days, parkFilter)
+
+    // Return top 20 deals
+    res.json({
+      searchParams: { days, park: parkFilter || 'all' },
+      totalDeals: deals.length,
+      topDeals: deals.slice(0, 20),
+    })
+  } catch (error) {
+    console.error('Error finding consecutive days deals:', error)
+    res.status(500).json({ error: 'Failed to find deals' })
   }
 })
 

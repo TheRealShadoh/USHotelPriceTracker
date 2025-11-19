@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Hotel, HotelPrice } from './types'
 import { HotelCard } from './components/HotelCard'
 import { CheapestDay } from './components/CheapestDay'
+import { ConsecutiveDaysSearch } from './components/ConsecutiveDaysSearch'
 import { Loader } from 'lucide-react'
 import { fetchHotels as fetchHotelsApi } from './api'
 
@@ -120,6 +121,11 @@ function App() {
         {/* Main Content */}
         {!loading && !error && (
           <>
+            {/* Consecutive Days Search */}
+            <div className="mb-12">
+              <ConsecutiveDaysSearch />
+            </div>
+
             {/* Cheapest Day Card */}
             {cheapestDay && (
               <div className="mb-12">
