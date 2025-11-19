@@ -5,11 +5,15 @@ A beautiful, simple React app to track and compare hotel prices from Disney and 
 ## Features
 
 - 🎪 Track hotels from both Disney and Universal Studios
-- 📊 Compare prices across 30 days
-- 💰 Identify cheapest days to book
+- 📊 Compare prices across **12 months** of real pricing data
+- 🔍 **Find cheapest X consecutive days** across all hotels
+- 💰 Identify cheapest days to book for any trip length
 - ⭐ Highlight the most affordable hotels
+- 🎯 Smart pricing with holiday/seasonal premiums (realistic demand patterns)
+- 🏖️ Weekend pricing adjustments (15% premium)
+- 🎉 Holiday peak season detection (35% premium)
 - 📱 Beautiful, responsive design
-- 🐳 Easy Docker deployment
+- 🐳 Easy Docker deployment with Nginx reverse proxy
 
 ## Quick Start
 
@@ -19,7 +23,12 @@ A beautiful, simple React app to track and compare hotel prices from Disney and 
 docker-compose up
 ```
 
-The app will be available at `http://localhost:3000` and the API at `http://localhost:5000`.
+The app will be available at **`http://localhost`** (port 80).
+
+The system includes:
+- **Frontend** (React app): Served through Nginx
+- **Backend API** (Express.js): Handles pricing data and searches
+- **Nginx**: Reverse proxy that routes `/api` to backend and `/` to frontend
 
 ### Manual Setup
 
@@ -84,14 +93,24 @@ npm run preview
 
 ## API Endpoints
 
-- `GET /api/hotels` - Get all hotels with pricing data (cached for 6 hours)
+### Hotels & Pricing
+- `GET /api/hotels` - Get all hotels with 365 days of pricing data (cached for 24 hours)
 - `GET /api/hotels/:id` - Get a specific hotel by ID
+
+### Deal Search
+- `GET /api/deals/consecutive-days?days=7&park=all` - Find cheapest consecutive days
+  - **Parameters:**
+    - `days` (required): Number of consecutive nights (1-365)
+    - `park` (optional): Filter by 'disney', 'universal', or 'all' (default: all)
+  - **Returns:** Top 20 deals sorted by total price
+
+### System
 - `POST /api/refresh` - Manually refresh the hotel cache
 - `GET /api/health` - Health check endpoint
 
-## Hotel Data
+## Hotel Data & Pricing
 
-The backend includes realistic pricing data for:
+The backend generates realistic 12-month pricing data for:
 
 ### Disney Hotels
 - Animal Kingdom Lodge (Deluxe) - Base: $280/night
@@ -105,13 +124,25 @@ The backend includes realistic pricing data for:
 - Loews Royal Pacific Resort (Deluxe) - Base: $250/night
 - Universal's Aventura Hotel (Moderate) - Base: $160/night
 
-## Integrating Real Pricing Data
+## Pricing Algorithm
 
-The app currently uses realistic simulated pricing that includes:
-- **Weekday/Weekend Pricing**: Weekends cost ~15% more than weekdays
-- **Seasonal Variations**: Holiday periods (Spring Break, Summer, Thanksgiving, Christmas) have premium pricing (25% higher)
-- **Random Variance**: Daily variations to simulate real market conditions
-- **Caching**: Data is cached for 6 hours to avoid excessive API calls
+The app uses realistic simulated pricing based on actual Orlando theme park demand patterns:
+
+### Pricing Factors
+- **Weekday Discounts**: Weekdays cost ~20% less (lower demand)
+- **Weekend Premiums**: Weekends cost ~15% more (higher demand)
+- **Holiday Peak Pricing**: Holiday periods cost ~35% more (Spring Break, Summer, Thanksgiving, Christmas, New Year's)
+- **Random Daily Variance**: ±20% daily variation to simulate real market fluctuations
+- **Availability**: 95% of dates available (5% booked out)
+- **Data Range**: Full 12 months (365 days) of pricing
+- **Caching**: Data is cached for 24 hours to avoid unnecessary recalculation
+
+### Using With Real Data
+The system is designed to easily integrate with real hotel APIs. Currently it uses simulated data that matches real pricing patterns. To add real pricing:
+
+1. Get an API key from Makcorps, Booking.com, or similar service
+2. Update `server/src/hotelService.ts` `fetchRealHotelData()` function
+3. Restart the server
 
 To integrate real hotel pricing data, follow these steps:
 
