@@ -56,7 +56,7 @@ export function ConsecutiveDaysSearch() {
     <div className="bg-white/80 backdrop-blur-md rounded-lg p-8 shadow-lg mb-8">
       <h2 className="text-2xl font-bold text-gray-800 mb-6">Find Cheapest Consecutive Days</h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Number of Days</label>
           <input
@@ -77,8 +77,8 @@ export function ConsecutiveDaysSearch() {
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             <option value="all">All Parks</option>
-            <option value="disney">Disney</option>
-            <option value="universal">Universal</option>
+            <option value="disney">Disney Only</option>
+            <option value="universal">Universal Only</option>
           </select>
         </div>
 
@@ -96,10 +96,30 @@ export function ConsecutiveDaysSearch() {
             ) : (
               <>
                 <Search className="w-4 h-4" />
-                Search
+                Search Deals
               </>
             )}
           </button>
+        </div>
+      </div>
+
+      {/* Quick presets */}
+      <div className="mb-6 pb-6 border-b border-gray-200">
+        <p className="text-xs font-semibold text-gray-600 mb-3 uppercase">Quick Presets</p>
+        <div className="flex flex-wrap gap-2">
+          {[3, 5, 7, 10, 14].map(days => (
+            <button
+              key={days}
+              onClick={() => setNumberOfDays(days)}
+              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                numberOfDays === days
+                  ? 'bg-green-500 text-white'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              {days} {days === 1 ? 'night' : 'nights'}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -111,32 +131,48 @@ export function ConsecutiveDaysSearch() {
 
       {searched && deals.length > 0 && (
         <div>
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">
-            Top 20 Deals for {numberOfDays} nights
-          </h3>
+          <div className="mb-6">
+            <h3 className="text-xl font-bold text-gray-800 mb-2">
+              ✨ Top {Math.min(20, deals.length)} Deals for {numberOfDays} nights
+            </h3>
+            <p className="text-sm text-gray-600">
+              Found {deals.length} available options across {parkFilter === 'all' ? 'all parks' : parkFilter === 'disney' ? 'Disney hotels' : 'Universal hotels'}.
+              Sorted by lowest total price.
+            </p>
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-gray-100 border-b-2 border-gray-300">
+                <tr className="bg-gradient-to-r from-blue-500 to-blue-600 text-white border-b-2 border-blue-700">
                   <th className="px-4 py-3 text-left font-semibold">Hotel</th>
-                  <th className="px-4 py-3 text-left font-semibold">Park</th>
-                  <th className="px-4 py-3 text-left font-semibold">Check-in</th>
-                  <th className="px-4 py-3 text-left font-semibold">Check-out</th>
+                  <th className="px-4 py-3 text-left font-semibold hidden md:table-cell">Park</th>
+                  <th className="px-4 py-3 text-left font-semibold hidden sm:table-cell">Dates</th>
                   <th className="px-4 py-3 text-right font-semibold">Total</th>
-                  <th className="px-4 py-3 text-right font-semibold">Per Night</th>
+                  <th className="px-4 py-3 text-right font-semibold">/Night</th>
                 </tr>
               </thead>
               <tbody>
                 {deals.map((deal, idx) => (
-                  <tr key={`${deal.hotelId}-${deal.startDate}`} className={`border-b ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50`}>
-                    <td className="px-4 py-3 font-medium text-gray-800">{deal.hotelName}</td>
+                  <tr key={`${deal.hotelId}-${deal.startDate}`} className={`border-b transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50`}>
                     <td className="px-4 py-3">
+                      <div>
+                        <p className="font-semibold text-gray-800">{deal.hotelName}</p>
+                        <p className="text-xs text-gray-500 md:hidden">
+                          {deal.park === 'disney' ? '🏰 Disney' : '🎪 Universal'} • {formatDate(deal.startDate)} to {formatDate(deal.endDate)}
+                        </p>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 hidden md:table-cell">
                       <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${deal.park === 'disney' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'}`}>
                         {deal.park === 'disney' ? '🏰 Disney' : '🎪 Universal'}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-gray-700">{formatDate(deal.startDate)}</td>
-                    <td className="px-4 py-3 text-gray-700">{formatDate(deal.endDate)}</td>
+                    <td className="px-4 py-3 hidden sm:table-cell text-gray-700 text-xs">
+                      <div className="whitespace-nowrap">
+                        <p>{formatDate(deal.startDate)}</p>
+                        <p>→ {formatDate(deal.endDate)}</p>
+                      </div>
+                    </td>
                     <td className="px-4 py-3 text-right">
                       <span className="font-bold text-lg text-green-600">${deal.totalPrice.toLocaleString()}</span>
                     </td>

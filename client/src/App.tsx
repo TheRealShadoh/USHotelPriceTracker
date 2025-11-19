@@ -3,6 +3,8 @@ import { Hotel, HotelPrice } from './types'
 import { HotelCard } from './components/HotelCard'
 import { CheapestDay } from './components/CheapestDay'
 import { ConsecutiveDaysSearch } from './components/ConsecutiveDaysSearch'
+import { YearlySummary } from './components/YearlySummary'
+import { MonthFilter } from './components/MonthFilter'
 import { Loader } from 'lucide-react'
 import { fetchHotels as fetchHotelsApi } from './api'
 
@@ -11,6 +13,7 @@ function App() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [filterPark, setFilterPark] = useState<'all' | 'disney' | 'universal'>('all')
+  const [selectedMonth, setSelectedMonth] = useState<string | null>(null)
 
   useEffect(() => {
     loadHotels()
@@ -121,10 +124,16 @@ function App() {
         {/* Main Content */}
         {!loading && !error && (
           <>
+            {/* Yearly Summary */}
+            <YearlySummary hotels={hotels} />
+
             {/* Consecutive Days Search */}
             <div className="mb-12">
               <ConsecutiveDaysSearch />
             </div>
+
+            {/* Month Filter */}
+            <MonthFilter selectedMonth={selectedMonth} onMonthChange={setSelectedMonth} />
 
             {/* Cheapest Day Card */}
             {cheapestDay && (
@@ -141,6 +150,7 @@ function App() {
                   hotel={hotel}
                   cheapestPrice={minPrice}
                   isLowestPrice={cheapestHotel?.id === hotel.id}
+                  monthFilter={selectedMonth}
                 />
               ))}
             </div>

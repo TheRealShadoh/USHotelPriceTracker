@@ -5,12 +5,18 @@ interface HotelCardProps {
   hotel: Hotel
   cheapestPrice: number
   isLowestPrice: boolean
+  monthFilter?: string | null
 }
 
-export function HotelCard({ hotel, cheapestPrice, isLowestPrice }: HotelCardProps) {
-  const avgPrice = hotel.prices.reduce((acc, p) => acc + p.price, 0) / hotel.prices.length
-  const minPrice = Math.min(...hotel.prices.map(p => p.price))
-  const maxPrice = Math.max(...hotel.prices.map(p => p.price))
+export function HotelCard({ hotel, cheapestPrice, isLowestPrice, monthFilter }: HotelCardProps) {
+  // Filter prices by month if selected
+  const filteredPrices = monthFilter
+    ? hotel.prices.filter(p => p.date.startsWith(`2024-${monthFilter}`))
+    : hotel.prices
+
+  const avgPrice = filteredPrices.reduce((acc, p) => acc + p.price, 0) / filteredPrices.length
+  const minPrice = Math.min(...filteredPrices.map(p => p.price))
+  const maxPrice = Math.max(...filteredPrices.map(p => p.price))
 
   const getPriceColor = (price: number) => {
     if (price <= cheapestPrice * 1.1) return 'text-green-600'
@@ -50,6 +56,11 @@ export function HotelCard({ hotel, cheapestPrice, isLowestPrice }: HotelCardProp
       </div>
 
       <div className="mt-4 pt-4 border-t border-gray-200">
+        {monthFilter && (
+          <p className="text-xs text-blue-600 font-semibold mb-2">
+            📅 Filtered to selected month
+          </p>
+        )}
         <p className="text-xs text-gray-600">Price Range: ${minPrice} - ${maxPrice}</p>
         <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
           <div
